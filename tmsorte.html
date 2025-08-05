@@ -1,0 +1,1144 @@
+﻿
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>SISTEMA TIMONHA DA SORTE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { box-sizing: border-box: 12px; margin: 10; padding: 10; font-family: Arial, sans-serif; }
+    body { background: #f0f0f0; }
+    .slide { display: none; padding: 60px; }
+    .ativo { display: block; }
+    .btn { padding: 10px 20px; margin: 5px; background: green; color: #fff; border: 5px; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+<!-- SLIDE 0: TIMONHA DA SORTE -->
+<div id="slide0" class="slide ativo">
+  <style>
+    #slide0 { background: #fff; text-align: center; }
+  </style>
+  <h2>Login</h2>
+  <input id="usuario" placeholder="Usuário" /><br><br>
+  <input id="senha" type="password" placeholder="Senha" /><br><br>
+  <button class="btn" onclick="fazerLogin()">Entrar</button>
+
+  <script>
+    function fazerLogin() {
+      const user = document.getElementById('usuario').value;
+      const pass = document.getElementById('senha').value;
+      if ((user === 'Benedito' || user === 'Pedro' || user === 'Chaguinha') && pass === '1552') {
+        localStorage.setItem('usuarioLogado', user);
+        showSlide(1);
+      } else {
+        alert('Usuário ou senha incorretos');
+      }
+    }
+  </script>
+</div>
+
+<!-- SLIDE 1: PAINEL -->
+<div id="slide1" class="slide">
+
+  <style>
+    #slide1 { background: #e0ffe0; }
+  </style>
+  <h2>Painel Principal</h2>
+  <p>Bem-vindo, <span id="nomeUsuarioPainel"></span></p>
+  <button class="btn" onclick="showSlide(2)">Usuário</button>
+  <button class="btn" onclick="showSlide(3)">Cadastro</button>
+  <button class="btn" onclick="showSlide(4)">Vendas</button>
+  <button class="btn" onclick="showSlide(5)">Devedores</button>
+  <button class="btn" onclick="showSlide(6)">Caixa</button>
+  <button class="btn" onclick="showSlide(7)">LANCAMENTOS</button>
+  <button class="btn" onclick="showSlide(8)">Relatorio</button>
+  <button class="btn" onclick="showSlide(9)">backup</button>
+  <button class="btn" onclick="showSlide(10)">Zerar</button>
+  <button class="btn" onclick="showSlide(0)">Sair</button>
+
+  <script>
+    document.getElementById('nomeUsuarioPainel').innerText = localStorage.getItem('usuarioLogado') || '';
+  </script>
+</div>
+
+<!-- SLIDE 2 ao 9: EM BRANCO POR ENQUANTO -->
+
+<!-- SLIDE 2 - USUÁRIO -->
+<div class="slide" id="slide2" style="padding:20px; background:#eef7ff;">
+
+
+
+  <p>Olá, <span id="nomeUsuario"></span>!</p>
+
+  <p>Aqui você pode acessar os arquivos e históricos do sistema:</p>
+
+  <a href="https://drive.google.com/drive/folders/1Lrx8H0HdifNR_q85YoLjF8nCxxqr0sB1?usp=drive_link" target="_blank" 
+     style="display:inline-block; padding:10px 15px; background:#4285f4; color:#fff; border-radius:5px; text-decoration:none; margin-bottom:20px;">
+    Abrir pasta do Google Drive
+  </a>
+
+  <h3>Lista de Vendedores</h3>
+
+  <table border="1" width="100%" style="border-collapse: collapse; margin-bottom: 15px;">
+    <thead>
+      <tr style="background:#ddd;">
+        <th>Nome</th>
+        <th>Localidade</th>
+        <th>Cotação</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody id="listaVendedores"></tbody>
+  </table>
+
+  <!-- Modal simples para editar vendedor -->
+  <div id="modalEditar" style="display:none; position: fixed; top:50%; left:50%; transform: translate(-50%, -50%);
+      background:#fff; border: 1px solid #ccc; padding: 20px; z-index: 1000; width: 300px; box-shadow: 0 0 10px rgba(0,0,0,0.3);">
+    <h3>Editar Vendedor</h3>
+    <form id="formEditarVendedor">
+      <label>Nome:</label>
+      <input type="text" id="editNome" required style="width: 100%; margin-bottom: 10px;">
+      <label>Localidade:</label>
+      <input type="text" id="editLocalidade" required style="width: 100%; margin-bottom: 10px;">
+      <label>Cotação:</label>
+      <input type="number" step="0.01" id="editCotacao" required style="width: 100%; margin-bottom: 10px;">
+      <button type="submit" style="margin-right: 10px;">Salvar</button>
+      <button type="button" onclick="fecharModalEditar()">Cancelar</button>
+    </form>
+  </div>
+
+  <div id="overlayModal" style="display:none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index: 999;"></div>
+
+  <script>
+    function carregarNomeUsuario() {
+      const nome = localStorage.getItem('usuarioLogado') || 'Usuário';
+      document.getElementById('nomeUsuario').textContent = nome;
+    }
+
+    // Carrega a lista de vendedores da storage e popula a tabela
+    function carregarVendedores() {
+      const lista = document.getElementById('listaVendedores');
+      lista.innerHTML = '';
+      const vendedores = JSON.parse(localStorage.getItem('vendedores') || '[]');
+
+      vendedores.forEach((vendedor, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${vendedor.nome}</td>
+          <td>${vendedor.localidade}</td>
+          <td>${parseFloat(vendedor.cotacao).toFixed(2)}</td>
+          <td>
+            <button onclick="abrirModalEditar(${index})">Editar</button>
+            <button onclick="excluirVendedor(${index})" style="margin-left:5px; color: red;">Excluir</button>
+          </td>
+        `;
+        lista.appendChild(tr);
+      });
+    }
+
+    // Modal editar
+    function abrirModalEditar(index) {
+      const vendedores = JSON.parse(localStorage.getItem('vendedores') || '[]');
+      const vendedor = vendedores[index];
+
+      document.getElementById('editNome').value = vendedor.nome;
+      document.getElementById('editLocalidade').value = vendedor.localidade;
+      document.getElementById('editCotacao').value = vendedor.cotacao;
+
+      document.getElementById('formEditarVendedor').dataset.index = index;
+
+      document.getElementById('modalEditar').style.display = 'block';
+      document.getElementById('overlayModal').style.display = 'block';
+    }
+
+    function fecharModalEditar() {
+      document.getElementById('modalEditar').style.display = 'none';
+      document.getElementById('overlayModal').style.display = 'none';
+    }
+
+    // Salvar edição
+    document.getElementById('formEditarVendedor').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const index = this.dataset.index;
+      const nome = document.getElementById('editNome').value.trim();
+      const localidade = document.getElementById('editLocalidade').value.trim();
+      const cotacao = parseFloat(document.getElementById('editCotacao').value);
+
+      if (!nome || !localidade || isNaN(cotacao)) {
+        alert('Por favor, preencha todos os campos corretamente.');
+        return;
+      }
+
+      let vendedores = JSON.parse(localStorage.getItem('vendedores') || '[]');
+      vendedores[index] = { nome, localidade, cotacao };
+      localStorage.setItem('vendedores', JSON.stringify(vendedores));
+      fecharModalEditar();
+      carregarVendedores();
+      alert('Vendedor atualizado com sucesso!');
+    });
+
+    // Excluir vendedor
+    function excluirVendedor(index) {
+      if (!confirm('Tem certeza que deseja excluir este vendedor?')) return;
+
+      let vendedores = JSON.parse(localStorage.getItem('vendedores') || '[]');
+      vendedores.splice(index, 1);
+      localStorage.setItem('vendedores', JSON.stringify(vendedores));
+      carregarVendedores();
+      alert('Vendedor excluído com sucesso!');
+    }
+
+    // Inicialização
+    carregarNomeUsuario();
+    carregarVendedores();
+  </script>
+<button class="btn" onclick="showSlide(1)">Voltar</button></div>
+</div>
+
+
+
+<!-- SLIDE 3: CADASTRO DE VENDEDORES -->
+<div id="slide3" class="slide">
+<button class="btn" onclick="showSlide(1)">Voltar</button>
+  <style>
+    #slide3 { background: #e8f4ff; padding: 20px; }
+    #slide3 input, #slide3 button { margin: 5px 5px 15px 0; padding: 8px; }
+    #listaVendedores { margin-top: 20px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #ddd; }
+    button { cursor: pointer; }
+    button.edit-btn { background-color: #4CAF50; color: white; border: none; padding: 5px 10px; margin-right: 5px; border-radius: 4px; }
+    button.delete-btn { background-color: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 4px; }
+  </style>
+
+  <h2>Cadastro de Vendedores</h2>
+
+  <input id="nomeVendedor" placeholder="Nome do vendedor" />
+  <input id="localidadeVendedor" placeholder="Localidade" />
+  <input id="cotacaoVendedor" type="number" step="0.01" placeholder="Cotação" />
+  <button class="btn" onclick="salvarVendedor()">Salvar</button>
+
+  <div id="listaVendedores"></div>
+
+  <script>
+    let editandoIndex = -1;
+
+    function salvarVendedor() {
+      const nome = document.getElementById('nomeVendedor').value.trim();
+      const localidade = document.getElementById('localidadeVendedor').value.trim();
+      const cotacao = parseFloat(document.getElementById('cotacaoVendedor').value.trim());
+
+      if (!nome || !localidade || isNaN(cotacao)) {
+        alert('Preencha todos os campos corretamente.');
+        return;
+      }
+
+      let vendedores = JSON.parse(localStorage.getItem('vendedores') || '[]');
+
+      const novo = { nome, localidade, cotacao };
+
+      if (editandoIndex >= 0) {
+        vendedores[editandoIndex] = novo;
+        editandoIndex = -1;
+      } else {
+        vendedores.push(novo);
+      }
+
+      localStorage.setItem('vendedores', JSON.stringify(vendedores));
+      limparCampos();
+      listarVendedores();
+    }
+
+    function listarVendedores() {
+      const lista = document.getElementById('listaVendedores');
+      lista.innerHTML = '';
+
+      const vendedores = JSON.parse(localStorage.getItem('vendedores') || '[]');
+
+      if (vendedores.length === 0) {
+        lista.innerHTML = '<p>Nenhum vendedor cadastrado.</p>';
+        return;
+      }
+
+      const tabela = document.createElement('table');
+
+      tabela.innerHTML = `
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Localidade</th>
+            <th>Cotação (R$)</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${vendedores.map((vend, i) => `
+            <tr>
+              <td>${vend.nome}</td>
+              <td>${vend.localidade}</td>
+              <td>${vend.cotacao.toFixed(2)}</td>
+              <td>
+                <button class="edit-btn" onclick="editarVendedor(${i})">Editar</button>
+                <button class="delete-btn" onclick="excluirVendedor(${i})">Excluir</button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      `;
+
+      lista.appendChild(tabela);
+    }
+
+    function editarVendedor(index) {
+      const vendedores = JSON.parse(localStorage.getItem('vendedores') || '[]');
+      const vend = vendedores[index];
+
+      document.getElementById('nomeVendedor').value = vend.nome;
+      document.getElementById('localidadeVendedor').value = vend.localidade;
+      document.getElementById('cotacaoVendedor').value = vend.cotacao;
+
+      editandoIndex = index;
+    }
+
+    function excluirVendedor(index) {
+      if (confirm('Deseja realmente excluir este vendedor?')) {
+        let vendedores = JSON.parse(localStorage.getItem('vendedores') || '[]');
+        vendedores.splice(index, 1);
+        localStorage.setItem('vendedores', JSON.stringify(vendedores));
+        listarVendedores();
+      }
+    }
+
+    function limparCampos() {
+      document.getElementById('nomeVendedor').value = '';
+      document.getElementById('localidadeVendedor').value = '';
+      document.getElementById('cotacaoVendedor').value = '';
+      editandoIndex = -1;
+    }
+
+    // Carrega lista ao abrir o slide
+    document.addEventListener('DOMContentLoaded', listarVendedores);
+  </script>
+</div>
+
+
+
+
+<!-- SLIDE 4: VENDAS -->
+<div id="slide4" class="slide">
+<button class="btn" onclick="showSlide(1)">Voltar</button>
+  <style>
+    #slide4 { background: #fff8e1; }
+    #vendedorSelecionado { font-weight: bold; margin-bottom: 10px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
+    input[type="number"], input[type="date"] { width: 100px; }
+  </style>
+
+  <h2>Lançamentos de Vendas</h2>
+  <label for="selecioneVendedor">Selecione um vendedor:</label>
+  <select id="selecioneVendedor" onchange="carregarHistorico()"></select>
+
+  <div id="vendedorSelecionado"></div>
+
+  <button class="btn" onclick="adicionarLinha()">Adicionar Venda</button>
+  <button class="btn" onclick="salvarVendas()">Salvar</button>
+
+  <table id="tabelaVendas">
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Anterior</th>
+        <th>Final</th>
+        <th>Recebeu</th>
+        <th>Devolveu</th>
+        <th>Vendeu</th>
+        <th>Apurou (R$)</th>
+        <th>Pagou (R$)</th>
+        <th>Deve (R$)</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    let vendedorAtualIndex = null;
+
+    function carregarVendedoresSelect() {
+      const vendedores = JSON.parse(localStorage.getItem('vendedores') || '[]');
+      const select = document.getElementById('selecioneVendedor');
+      select.innerHTML = '<option value="">Selecione</option>';
+      vendedores.forEach((v, i) => {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = `${v.nome} (${v.localidade})`;
+        select.appendChild(option);
+      });
+    }
+
+    function carregarHistorico() {
+      vendedorAtualIndex = document.getElementById('selecioneVendedor').value;
+      const vendedores = JSON.parse(localStorage.getItem('vendedores') || '[]');
+
+      if (vendedorAtualIndex === '') {
+        document.getElementById('vendedorSelecionado').innerHTML = '';
+        document.querySelector('#tabelaVendas tbody').innerHTML = '';
+        return;
+      }
+
+      const vendedor = vendedores[vendedorAtualIndex];
+      document.getElementById('vendedorSelecionado').innerText = `Vendedor: ${vendedor.nome} | Cotação: R$ ${vendedor.cotacao}`;
+
+      const historico = JSON.parse(localStorage.getItem('historico_' + vendedor.nome) || '[]');
+      desenharTabela(historico, vendedor.cotacao);
+    }
+
+    function desenharTabela(historico, cotacao) {
+      const tbody = document.querySelector('#tabelaVendas tbody');
+      tbody.innerHTML = '';
+
+      historico.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><input type="date" value="${item.data || ''}" onchange="recalcular(${index})"></td>
+          <td><input type="number" value="${item.anterior}" onchange="recalcular(${index})"></td>
+          <td><input type="number" value="${item.final}" onchange="recalcular(${index})"></td>
+          <td><input type="number" value="${item.recebeu}" readonly></td>
+          <td><input type="number" value="${item.devolveu}" onchange="recalcular(${index})"></td>
+          <td><input type="number" value="${item.vendeu}" readonly></td>
+          <td><input type="number" value="${item.apurou}" readonly></td>
+          <td><input type="number" value="${item.pagou}" onchange="recalcular(${index})"></td>
+          <td><input type="number" value="${item.deve}" readonly></td>
+          <td><button onclick="removerLinha(${index})">Remover</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function adicionarLinha() {
+      if (vendedorAtualIndex === null || vendedorAtualIndex === '') {
+        alert('Selecione um vendedor primeiro.');
+        return;
+      }
+
+      const vendedores = JSON.parse(localStorage.getItem('vendedores') || '[]');
+      const vendedor = vendedores[vendedorAtualIndex];
+      const historico = JSON.parse(localStorage.getItem('historico_' + vendedor.nome) || '[]');
+
+      historico.push({
+        data: '',
+        anterior: 0,
+        final: 0,
+        recebeu: 0,
+        devolveu: 0,
+        vendeu: 0,
+        apurou: 0,
+        pagou: 0,
+        deve: 0
+      });
+
+      localStorage.setItem('historico_' + vendedor.nome, JSON.stringify(historico));
+      desenharTabela(historico, vendedor.cotacao);
+    }
+
+    function removerLinha(index) {
+      const vendedores = JSON.parse(localStorage.getItem('vendedores') || '[]');
+      const vendedor = vendedores[vendedorAtualIndex];
+      let historico = JSON.parse(localStorage.getItem('historico_' + vendedor.nome) || '[]');
+
+      historico.splice(index, 1);
+      localStorage.setItem('historico_' + vendedor.nome, JSON.stringify(historico));
+      desenharTabela(historico, vendedor.cotacao);
+    }
+
+    function salvarVendas() {
+      const vendedores = JSON.parse(localStorage.getItem('vendedores') || '[]');
+      const vendedor = vendedores[vendedorAtualIndex];
+
+      const rows = document.querySelectorAll('#tabelaVendas tbody tr');
+      const historico = [];
+
+      rows.forEach(row => {
+        const cells = row.querySelectorAll('input');
+        historico.push({
+          data: cells[0].value,
+          anterior: parseInt(cells[1].value) || 0,
+          final: parseInt(cells[2].value) || 0,
+          recebeu: parseInt(cells[3].value) || 0,
+          devolveu: parseInt(cells[4].value) || 0,
+          vendeu: parseInt(cells[5].value) || 0,
+          apurou: parseFloat(cells[6].value) || 0,
+          pagou: parseFloat(cells[7].value) || 0,
+          deve: parseFloat(cells[8].value) || 0
+        });
+      });
+
+      localStorage.setItem('historico_' + vendedor.nome, JSON.stringify(historico));
+      alert('Vendas salvas com sucesso!');
+    }
+
+    function recalcular(index) {
+      const row = document.querySelectorAll('#tabelaVendas tbody tr')[index];
+      const inputs = row.querySelectorAll('input');
+      const anterior = parseInt(inputs[1].value) || 0;
+      const final = parseInt(inputs[2].value) || 0;
+      const devolveu = parseInt(inputs[4].value) || 0;
+      const pagou = parseFloat(inputs[7].value) || 0;
+
+      const recebeu = final - anterior;
+      const vendeu = recebeu - devolveu;
+
+      const vendedores = JSON.parse(localStorage.getItem('vendedores') || '[]');
+      const vendedor = vendedores[vendedorAtualIndex];
+      const cotacao = parseFloat(vendedor.cotacao);
+
+      const apurou = vendeu * cotacao;
+      const deve = apurou - pagou;
+
+      inputs[3].value = recebeu;
+      inputs[5].value = vendeu;
+      inputs[6].value = apurou.toFixed(2);
+      inputs[8].value = deve.toFixed(2);
+    }
+
+    document.addEventListener('DOMContentLoaded', carregarVendedoresSelect);
+  </script>
+</div>
+
+
+<!-- SLIDE 5: LISTA DE DEVEDORES -->
+<div id="slide5" class="slide">
+<button class="btn" onclick="showSlide(1)">Voltar</button>
+  <style>
+    #slide5 { background: #ffe6e6; }
+    #listaDevedores { margin-top: 20px; }
+    .devedor { padding: 10px; margin-bottom: 10px; background: #fff; border-left: 5px solid red; }
+  </style>
+
+  <h2>Lista de Devedores</h2>
+  <button class="btn" onclick="carregarDevedores()">Atualizar Lista</button>
+
+  <div id="listaDevedores"></div>
+
+  <script>
+    function carregarDevedores() {
+      const vendedores = JSON.parse(localStorage.getItem('vendedores') || '[]');
+      const container = document.getElementById('listaDevedores');
+      container.innerHTML = '';
+
+      vendedores.forEach(vendedor => {
+        const historico = JSON.parse(localStorage.getItem('historico_' + vendedor.nome) || '[]');
+        const totalDeve = historico.reduce((acc, item) => acc + (parseFloat(item.deve) || 0), 0);
+
+        if (totalDeve > 0) {
+          const div = document.createElement('div');
+          div.className = 'devedor';
+          div.innerHTML = `
+            <strong>${vendedor.nome}</strong> - ${vendedor.localidade}<br>
+            <span>Total Devido: <strong style="color: red;">R$ ${totalDeve.toFixed(2)}</strong></span>
+          `;
+          container.appendChild(div);
+        }
+      });
+
+      if (container.innerHTML === '') {
+        container.innerHTML = '<p>Nenhum devedor no momento.</p>';
+      }
+    }
+  </script>
+</div>
+
+
+<!-- SLIDE 6: CAIXA -->
+<div id="slide6" class="slide">
+  <button class="btn" onclick="showSlide(1)">Voltar</button>
+  <style>
+    #slide6 { background: #e0f7fa; }
+    h3 { margin-top: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
+    .resumo, .despesas, .partilha { margin-top: 20px; }
+  </style>
+
+  <h2>Movimento de Caixa</h2>
+
+  <div><strong>Saldo Anterior:</strong> R$ <span id="saldoAnterior">0.00</span></div>
+  <div><strong>Total Apurado:</strong> R$ <span id="totalApurado">0.00</span></div>
+  <div><strong>Total Despesas:</strong> R$ <span id="totalDespesas">0.00</span></div>
+  <div><strong>Saldo Final:</strong> R$ <span id="saldoFinal">0.00</span></div>
+
+  <div class="resumo">
+    <h3>Resumo por Vendedor</h3>
+    <table id="tabelaResumo">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Vendedor</th>
+          <th>Vendeu</th>
+          <th>Apurou</th>
+          <th>Pagou</th>
+          <th>Deve</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="despesas">
+    <h3>Despesas</h3>
+    <table id="tabelaDespesas">
+      <thead>
+        <tr>
+          <th>Descrição</th>
+          <th>Valor</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="partilha">
+    <h3>Partilha do Saldo Final</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Participante</th>
+          <th>Percentual</th>
+          <th>Valor</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Pedro</td>
+          <td>90%</td>
+          <td>R$ <span id="partePedro">0.00</span></td>
+        </tr>
+        <tr>
+          <td>Benedito</td>
+          <td>10%</td>
+          <td>R$ <span id="parteBenedito">0.00</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <button class="btn" onclick="carregarCaixa()">Atualizar Caixa</button>
+
+  <script>
+    function carregarCaixa() {
+      const vendedores = JSON.parse(localStorage.getItem('vendedores') || '[]');
+      const tbodyResumo = document.querySelector('#tabelaResumo tbody');
+      tbodyResumo.innerHTML = '';
+
+      let totalApurado = 0;
+
+      vendedores.forEach(v => {
+        const historico = JSON.parse(localStorage.getItem('historico_' + v.nome) || '[]');
+
+        historico.forEach(item => {
+          totalApurado += parseFloat(item.apurou) || 0;
+
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${item.data}</td>
+            <td>${v.nome}</td>
+            <td>${item.vendeu}</td>
+            <td>R$ ${parseFloat(item.apurou || 0).toFixed(2)}</td>
+            <td>R$ ${parseFloat(item.pagou || 0).toFixed(2)}</td>
+            <td>R$ ${parseFloat(item.deve || 0).toFixed(2)}</td>
+          `;
+          tbodyResumo.appendChild(tr);
+        });
+      });
+
+      // Receitas
+      const receitas = JSON.parse(localStorage.getItem('receitas') || '[]');
+      const saldoAnterior = receitas.reduce((acc, r) => acc + (parseFloat(r.valor) || 0), 0);
+
+      // Despesas
+      const despesas = JSON.parse(localStorage.getItem('despesas') || '[]');
+      const totalDespesas = despesas.reduce((acc, d) => acc + (parseFloat(d.valor) || 0), 0);
+
+      const tbodyDespesas = document.querySelector('#tabelaDespesas tbody');
+      tbodyDespesas.innerHTML = '';
+      despesas.forEach(d => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${d.descricao}</td><td>R$ ${parseFloat(d.valor).toFixed(2)}</td>`;
+        tbodyDespesas.appendChild(tr);
+      });
+
+      // Totais
+      const saldoFinal = saldoAnterior + totalApurado - totalDespesas;
+
+      document.getElementById('totalApurado').innerText = totalApurado.toFixed(2);
+      document.getElementById('saldoAnterior').innerText = saldoAnterior.toFixed(2);
+      document.getElementById('totalDespesas').innerText = totalDespesas.toFixed(2);
+      document.getElementById('saldoFinal').innerText = saldoFinal.toFixed(2);
+
+      // Partilha
+      document.getElementById('partePedro').innerText = (saldoFinal * 0.90).toFixed(2);
+      document.getElementById('parteJose').innerText = (saldoFinal * 0.25).toFixed(2);
+      document.getElementById('parteBenedito').innerText = (saldoFinal * 0.10).toFixed(2);
+    }
+
+    document.addEventListener('DOMContentLoaded', carregarCaixa);
+  </script>
+</div>
+
+
+
+
+<!-- SLIDE 7 - FORMULÁRIOS PARA SALDO ANTERIOR E DESPESAS -->
+<div class="slide" id="slide7">
+<button class="btn" onclick="showSlide(1)">Voltar</button>
+  <style>
+    #slide7 {
+      padding: 20px;
+    }
+    #slide7 h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    #slide7 form {
+      background: #f9f9f9;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+    }
+    #slide7 label {
+      display: block;
+      margin-top: 10px;
+    }
+    #slide7 input, #slide7 button {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      box-sizing: border-box;
+    }
+    #slide7 button {
+      margin-top: 15px;
+      cursor: pointer;
+    }
+  </style>
+
+
+  <h2>Formulários de Lançamentos</h2>
+
+  <!-- SALDO ANTERIOR -->
+  <form id="formReceita">
+    <h3>Inserir Saldo Anterior</h3>
+    <label>Valor (R$):</label>
+    <input type="number" id="valorReceita" step="0.01" required>
+    
+    <label>Descrição:</label>
+    <input type="text" id="descReceita" value="Saldo Anterior" required>
+
+    <label>Data:</label>
+    <input type="date" id="dataReceita" required>
+
+    <button type="submit">Salvar Receita</button>
+  </form>
+
+  <!-- DESPESAS -->
+  <form id="formDespesa">
+    <h3>Inserir Despesa</h3>
+    <label>Valor (R$):</label>
+    <input type="number" id="valorDespesa" step="0.01" required>
+    
+    <label>Descrição:</label>
+    <input type="text" id="descDespesa" placeholder="Descrição da despesa" required>
+
+    <label>Data:</label>
+    <input type="date" id="dataDespesa" required>
+
+    <button type="submit">Salvar Despesa</button>
+  </form>
+
+  <script>
+    // Função para formatar data atual em yyyy-mm-dd para input date
+    function getDataAtualInput() {
+      const hoje = new Date();
+      const ano = hoje.getFullYear();
+      const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+      const dia = String(hoje.getDate()).padStart(2, '0');
+      return `${ano}-${mes}-${dia}`;
+    }
+
+    // Preencher os campos de data com a data atual ao abrir o slide
+    function inicializarCamposData() {
+      document.getElementById('dataReceita').value = getDataAtualInput();
+      document.getElementById('dataDespesa').value = getDataAtualInput();
+    }
+    inicializarCamposData();
+
+    // Salvar Receita (Saldo Anterior)
+    document.getElementById('formReceita').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const valor = parseFloat(document.getElementById('valorReceita').value);
+      const desc = document.getElementById('descReceita').value.trim();
+      const data = document.getElementById('dataReceita').value; // yyyy-mm-dd
+
+      if (!data) {
+        alert("Por favor, informe a data da receita.");
+        return;
+      }
+
+      const receita = { valor, descricao: desc, data };
+      let receitas = JSON.parse(localStorage.getItem('receitas')) || [];
+      receitas.push(receita);
+      localStorage.setItem('receitas', JSON.stringify(receitas));
+
+      alert("Saldo Anterior salvo com sucesso!");
+      this.reset();
+      inicializarCamposData();
+    });
+
+    // Salvar Despesa
+    document.getElementById('formDespesa').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const valor = parseFloat(document.getElementById('valorDespesa').value);
+      const desc = document.getElementById('descDespesa').value.trim() || 'Despesa';
+      const data = document.getElementById('dataDespesa').value; // yyyy-mm-dd
+
+      if (!data) {
+        alert("Por favor, informe a data da despesa.");
+        return;
+      }
+
+      const despesa = { valor, descricao: desc, data };
+      let despesas = JSON.parse(localStorage.getItem('despesas')) || [];
+      despesas.push(despesa);
+      localStorage.setItem('despesas', JSON.stringify(despesas));
+
+      alert("Despesa salva com sucesso!");
+      this.reset();
+      inicializarCamposData();
+    });
+  </script>
+</div>
+
+
+
+
+<!-- SLIDE 8 - RELATÓRIO -->
+<div class="slide" id="slide8" style="padding:20px; background:#f7f7f7;">
+<button class="btn" onclick="showSlide(1)">Voltar</button>
+  <h2>RELATÓRIO DE VENDAS E DESPESAS</h2>
+
+  <label for="dataFiltro">Filtrar por data:</label>
+  <input type="date" id="dataFiltro" style="margin-bottom:15px; padding:5px;">
+
+  <button onclick="gerarRelatorioPorData()" style="margin-bottom:15px;">Consultar</button>
+
+  <h3>VENDAS</h3>
+  <table border="1" width="100%" id="tabelaVendas" style="border-collapse: collapse;">
+    <thead>
+      <tr style="background:#ddd;">
+        <th>Vendedor</th>
+        <th>Vendeu</th>
+        <th>Pagou</th>
+        <th>Deve</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h3>DESPESAS</h3>
+  <table border="1" width="100%" id="tabelaDespesas" style="border-collapse: collapse;">
+    <thead>
+      <tr style="background:#ddd;">
+        <th>Data</th>
+        <th>Descrição</th>
+        <th>Valor (R$)</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div id="resumo" style="margin-top: 20px; font-weight: bold; font-size: 1.1em;">
+    <!-- Valores apurado, despesas e saldo final aparecerão aqui -->
+  </div>
+
+  <br>
+  <button onclick="mostrarSlide(1)">Voltar</button>
+  <button onclick="exportarRelatorioPDF()">Exportar em PDF</button>
+
+  <!-- Importação jsPDF e autotable (ideal no head do HTML principal) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+  <script>
+    function gerarRelatorioPorData() {
+      const dataFiltro = document.getElementById('dataFiltro').value;
+      const tbodyVendas = document.querySelector('#tabelaVendas tbody');
+      const tbodyDespesas = document.querySelector('#tabelaDespesas tbody');
+      const resumo = document.getElementById('resumo');
+      tbodyVendas.innerHTML = '';
+      tbodyDespesas.innerHTML = '';
+      resumo.innerHTML = '';
+
+      if (!dataFiltro) {
+        tbodyVendas.innerHTML = '<tr><td colspan="4">Selecione uma data para filtrar.</td></tr>';
+        tbodyDespesas.innerHTML = '<tr><td colspan="3">Selecione uma data para filtrar.</td></tr>';
+        return;
+      }
+
+      const vendedores = JSON.parse(localStorage.getItem('vendedores') || '[]');
+      const despesas = JSON.parse(localStorage.getItem('despesas') || '[]');
+
+      let encontrouVenda = false;
+      let totalApurado = 0;
+      vendedores.forEach(vendedor => {
+        const historico = JSON.parse(localStorage.getItem('historico_' + vendedor.nome) || '[]');
+        historico.forEach(item => {
+          if (item.data === dataFiltro) {
+            encontrouVenda = true;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${vendedor.nome}</td>
+              <td>${item.vendeu}</td>
+              <td>${parseFloat(item.pagou || 0).toFixed(2)}</td>
+              <td>${parseFloat(item.deve || 0).toFixed(2)}</td>
+            `;
+            tbodyVendas.appendChild(tr);
+            totalApurado += parseFloat(item.apurou || 0);
+          }
+        });
+      });
+      if (!encontrouVenda) {
+        tbodyVendas.innerHTML = '<tr><td colspan="4">Nenhuma venda encontrada para essa data.</td></tr>';
+      }
+
+      let encontrouDespesa = false;
+      let totalDespesas = 0;
+      despesas.forEach(despesa => {
+        if (despesa.data === dataFiltro) {
+          encontrouDespesa = true;
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${despesa.data}</td>
+            <td>${despesa.descricao || ''}</td>
+            <td>${parseFloat(despesa.valor || 0).toFixed(2)}</td>
+          `;
+          tbodyDespesas.appendChild(tr);
+          totalDespesas += parseFloat(despesa.valor || 0);
+        }
+      });
+      if (!encontrouDespesa) {
+        tbodyDespesas.innerHTML = '<tr><td colspan="3">Nenhuma despesa encontrada para essa data.</td></tr>';
+      }
+
+      const saldoFinal = totalApurado - totalDespesas;
+      resumo.innerHTML = `
+        Total Apurado: R$ ${totalApurado.toFixed(2)}<br>
+        Total Despesas: R$ ${totalDespesas.toFixed(2)}<br>
+        <strong>Saldo Final: R$ ${saldoFinal.toFixed(2)}</strong>
+      `;
+    }
+
+    async function exportarRelatorioPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      const dataFiltro = document.getElementById('dataFiltro').value || 'Todas as datas';
+      doc.setFontSize(16);
+      doc.text(`Relatório de Vendas e Despesas - ${dataFiltro}`, 14, 20);
+
+      // VENDAS
+      doc.setFontSize(14);
+      doc.text('VENDAS', 14, 30);
+      doc.autoTable({
+        startY: 35,
+        head: [['Vendedor', 'Vendeu', 'Pagou', 'Deve']],
+        body: Array.from(document.querySelectorAll('#tabelaVendas tbody tr')).map(row =>
+          Array.from(row.cells).map(cell => cell.innerText)
+        ),
+        styles: { fontSize: 10 },
+      });
+
+      // DESPESAS
+      let finalY = doc.lastAutoTable.finalY + 10;
+      doc.setFontSize(14);
+      doc.text('DESPESAS', 14, finalY);
+      doc.autoTable({
+        startY: finalY + 5,
+        head: [['Data', 'Descrição', 'Valor (R$)']],
+        body: Array.from(document.querySelectorAll('#tabelaDespesas tbody tr')).map(row =>
+          Array.from(row.cells).map(cell => cell.innerText)
+        ),
+        styles: { fontSize: 10 },
+      });
+
+      // RESUMO
+      const resumoDiv = document.getElementById('resumo').innerText.split('\n');
+      let resumoY = doc.lastAutoTable.finalY + 15;
+      doc.setFontSize(12);
+      resumoDiv.forEach((linha, i) => {
+        doc.text(linha, 14, resumoY + (i * 7));
+      });
+
+      doc.save(`relatorio_${dataFiltro}.pdf`);
+    }
+  </script>
+</div>
+
+
+
+
+
+
+
+<!-- SLIDE 9 - BACKUP -->
+<div class="slide" id="slide9" style="padding:20px; background:#eef9ff;">
+<button class="btn" onclick="showSlide(1)">Voltar</button>
+  <h2>Backup do Sistema</h2>
+
+  <button id="btnExportarBackup" style="padding: 10px 20px; margin-bottom: 20px; cursor:pointer;">
+    Exportar Backup (.json)
+  </button>
+
+  <hr>
+
+  <h3>Restaurar Backup</h3>
+  <input type="file" id="inputArquivoBackup" accept=".json" style="margin-bottom: 10px;">
+  <br>
+  <button id="btnRestaurarBackup" style="padding: 10px 20px; cursor:pointer;">
+    Restaurar Backup
+  </button>
+
+  <p id="msgBackup" style="margin-top: 15px; font-weight: bold;"></p>
+
+  <button onclick="mostrarSlide(1)" style="margin-top: 20px;">Voltar</button>
+
+  <script>
+    // Exporta localStorage como arquivo JSON para download
+    document.getElementById('btnExportarBackup').addEventListener('click', () => {
+      const backup = {};
+      for(let i=0; i<localStorage.length; i++) {
+        const chave = localStorage.key(i);
+        backup[chave] = localStorage.getItem(chave);
+      }
+      const backupJson = JSON.stringify(backup, null, 2);
+      const blob = new Blob([backupJson], {type: 'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'backup.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // Restaurar backup a partir de arquivo JSON selecionado
+    document.getElementById('btnRestaurarBackup').addEventListener('click', () => {
+      const inputFile = document.getElementById('inputArquivoBackup');
+      const msg = document.getElementById('msgBackup');
+
+      if(!inputFile.files.length) {
+        msg.style.color = 'red';
+        msg.textContent = 'Por favor, selecione um arquivo de backup (.json).';
+        return;
+      }
+
+      const file = inputFile.files[0];
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        try {
+          const dadosBackup = JSON.parse(e.target.result);
+
+          if(typeof dadosBackup !== 'object') throw new Error('Backup inválido');
+
+          localStorage.clear();
+          for(const chave in dadosBackup) {
+            localStorage.setItem(chave, dadosBackup[chave]);
+          }
+
+          msg.style.color = 'green';
+          msg.textContent = 'Backup restaurado com sucesso!';
+          inputFile.value = '';
+
+        } catch(err) {
+          msg.style.color = 'red';
+          msg.textContent = 'Erro ao restaurar backup: arquivo inválido.';
+        }
+      };
+
+      reader.readAsText(file);
+    });
+  </script>
+</div>
+
+
+
+
+
+
+<!-- SLIDE 10 - ZERAR SISTEMA -->
+<div class="slide" id="slide10" style="padding: 20px; background: #ffe6e6;">
+  <button class="btn" onclick="showSlide(1)">Voltar</button>
+  <h2 style="color: #cc0000; text-align: center;">ZERAR SISTEMA</h2>
+  <p style="color: #cc0000; font-weight: bold;">
+    ATENÇÃO: Esta ação apagará todos os dados do sistema, incluindo vendedores, vendas, receitas e despesas.<br>
+    Esta operação não poderá ser desfeita!
+  </p>
+
+  <label for="senhaReset">Digite a senha para confirmar:</label>
+  <input type="password" id="senhaReset" style="width: 100%; padding: 8px; margin-top: 8px;" placeholder="Senha">
+
+  <button id="btnZerar" style="margin-top: 15px; padding: 10px 20px; background: #cc0000; color: white; border: none; cursor: pointer;">
+    Confirmar Zerar Sistema
+  </button>
+
+  <p id="msgReset" style="margin-top: 15px; font-weight: bold;"></p>
+
+  <button onclick="mostrarSlide(1)" style="margin-top: 20px;">Voltar</button>
+
+  <script>
+    document.getElementById('btnZerar').addEventListener('click', () => {
+      const senha = document.getElementById('senhaReset').value.trim();
+      const msg = document.getElementById('msgReset');
+      const senhaCorreta = 'admin1234'; // ajustar conforme sua senha
+
+      if (senha !== senhaCorreta) {
+        msg.style.color = 'red';
+        msg.textContent = 'Senha incorreta! Operação cancelada.';
+        return;
+      }
+
+      // Limpa completamente o localStorage, apagando todos os dados
+      localStorage.clear();
+
+      msg.style.color = 'green';
+      msg.textContent = 'Sistema zerado com sucesso!';
+
+      // Limpar campo senha
+      document.getElementById('senhaReset').value = '';
+
+      // Opcional: voltar para painel depois de alguns segundos
+      setTimeout(() => {
+        mostrarSlide(1);
+        msg.textContent = '';
+      }, 2500);
+    });
+  </script>
+</div>
+
+
+
+<div id="slide11" class="slide">
+<button class="btn" onclick="showSlide(1)">Voltar</button></div>
+
+<!-- FUNÇÃO GLOBAL PARA MUDAR SLIDE -->
+<script>
+  function showSlide(n) {
+    document.querySelectorAll('.slide').forEach(slide => slide.classList.remove('ativo'));
+    document.getElementById('slide' + n).classList.add('ativo');
+  }
+</script>
+
+</body>
+</html>
